@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atur registrat al Maresme</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <h1>Atur registrat al Maresme</h1>
+      <p>Comarca i 30 municipis · <span id="hdrData">carregant…</span></p>
+    </div>
+    <div class="ctrl">
+      <label>Territori
+        <select id="selTerr"></select>
+      </label>
+      <label class="slider-box">
+        <span class="mesl"><span>Mes</span><span id="mesLabel">—</span></span>
+        <input type="range" id="mesRange" min="0" max="0" value="0">
+      </label>
+      <button class="icon-btn" id="btnTheme" title="Canvia entre tema clar i fosc">◐ Tema</button>
+      <span class="pill" id="statusPill"><span class="dot"></span><span id="statusTxt">—</span></span>
+    </div>
+  </div>
+  <nav class="nav" id="nav">
+    <button data-tab="resum" class="on">Resum</button>
+    <button data-tab="mapa">Mapa</button>
+    <button data-tab="evolucio">Evolució</button>
+    <button data-tab="comparativa">Comparativa</button>
+    <button data-tab="perfil">Perfil de l'atur</button>
+    <button data-tab="dades">Dades i notes</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ======================= RESUM ======================= -->
+  <section class="tab on" id="tab-resum">
+    <div class="grid g6" id="kpis"></div>
+    <div class="grid g21" style="margin-top:16px">
+      <div class="card">
+        <h3 id="resumTitol">Evolució de l'atur registrat</h3>
+        <div class="sub">Atur registrat (línia) i taxa d'atur registral (línia discontínua, eix dret)</div>
+        <div class="chart" id="chResum1"></div>
+      </div>
+      <div class="card">
+        <h3>Variació interanual</h3>
+        <div class="sub">Canvi de l'atur respecte al mateix mes de l'any anterior</div>
+        <div class="chart" id="chResum2"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="row">
+        <div><h3 style="margin:0">Municipis del Maresme</h3><div class="sub" style="margin:0" id="rankSub"></div></div>
+        <label style="margin-left:auto">Cerca<input type="text" id="rankSearch" placeholder="Nom del municipi"></label>
+      </div>
+      <div class="tbl-wrap"><table id="tblRank"></table></div>
+      <p class="note">Clica una fila per seleccionar el territori. Clica una capçalera per ordenar.</p>
+    </div>
+  </section>
+
+  <!-- ======================= MAPA ======================= -->
+  <section class="tab" id="tab-mapa">
+    <div class="grid g21">
+      <div class="card">
+        <div class="row">
+          <label>Indicador <select id="mapInd"></select></label>
+          <label>&nbsp;<div class="seg"><button id="btnPlay">▶ Animació</button></div></label>
+          <label>&nbsp;<label style="flex-direction:row;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)"><input type="checkbox" id="mapLabels" checked> Noms</label></label>
+          <div class="legend" style="margin-left:auto"><span id="legMin"></span><div class="bar" id="legBar"></div><span id="legMax"></span></div>
+        </div>
+        <div class="mapwrap"><svg id="mapsvg"></svg></div>
+        <p class="note" style="margin:6px 0 0">Límits municipals: Institut Cartogràfic i Geològic de Catalunya (CC BY 4.0). Clica un municipi per veure'n la fitxa.</p>
+      </div>
+      <div class="card" id="mapSide"></div>
+    </div>
+  </section>
+
+  <!-- ======================= EVOLUCIÓ ======================= -->
+  <section class="tab" id="tab-evolucio">
+    <div class="card">
+      <div class="row">
+        <label>Indicador <select id="evInd"></select></label>
+        <label>Sexe <div class="seg" id="evSex">
+          <button data-s="T" class="on">Total</button><button data-s="H">Homes</button><button data-s="D">Dones</button><button data-s="HD">Homes i dones</button></div></label>
+        <label>&nbsp;<label style="flex-direction:row;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)"><input type="checkbox" id="evMM"> Mitjana mòbil 12 mesos</label></label>
+      </div>
+      <div class="chart tall" id="chEv1"></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Variació interanual (%)</h3><div class="sub">Respecte al mateix mes de l'any anterior</div><div class="chart" id="chEv2"></div></div>
+      <div class="card"><h3>Estacionalitat</h3><div class="sub">Cada línia és un any: permet comparar el mateix mes entre anys</div><div class="chart" id="chEv3"></div></div>
+    </div>
+  </section>
+
+  <!-- ======================= COMPARATIVA ======================= -->
+  <section class="tab" id="tab-comparativa">
+    <div class="card">
+      <div class="row">
+        <label>Afegeix un territori <select id="cmpAdd"></select></label>
+        <label>Indicador <select id="cmpInd">
+          <option value="idx">Atur registrat (índex, base 100)</option>
+          <option value="atur">Atur registrat (persones)</option>
+          <option value="taxa">Taxa d'atur registral (%)</option>
+          <option value="vint">Variació interanual de l'atur (%)</option>
+          <option value="pdones">Percentatge de dones en l'atur (%)</option></select></label>
+        <label id="cmpBaseBox">Base 100 al mes <select id="cmpBase"></select></label>
+        <div class="chips" id="cmpChips" style="margin-left:auto;align-self:center"></div>
+      </div>
+      <div class="chart tall" id="chCmp1"></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3 id="cmpRankTitol">Rànquing</h3><div class="sub">Tots els municipis al mes seleccionat; els triats, ressaltats</div><div class="chart tall" id="chCmp2"></div></div>
+      <div class="card"><h3>Taxa d'atur i variació interanual</h3><div class="sub">Cada bombolla és un municipi; la mida representa l'atur registrat</div><div class="chart tall" id="chCmp3"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>Taula comparativa</h3><div class="tbl-wrap"><table id="tblCmp"></table></div></div>
+  </section>
+
+  <!-- ======================= PERFIL ======================= -->
+  <section class="tab" id="tab-perfil">
+    <div class="card">
+      <div class="row">
+        <label>Desglossament <select id="pfDesg"></select></label>
+        <label>Sexe <div class="seg" id="pfSex"><button data-s="T" class="on">Total</button><button data-s="H">Homes</button><button data-s="D">Dones</button></div></label>
+        <label>Mostra <div class="seg" id="pfMode"><button data-m="v" class="on">Persones</button><button data-m="p">% del total</button><button data-m="vi">Var. interanual %</button></div></label>
+      </div>
+      <div class="note warn" id="pfNote" style="display:none"></div>
+      <div class="grid g2">
+        <div><div class="chart tall" id="chPf1"></div></div>
+        <div><div class="chart tall" id="chPf2"></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3 id="pfTblTitol">Detall</h3><div class="tbl-wrap"><table id="tblPf"></table></div>
+      <p class="note">En municipis petits, els valors d'1 a 3 persones són ocults per secret estadístic i s'han substituït per un valor aleatori reproduïble que fa quadrar el total. Interpreteu amb cautela les variacions de categories molt petites.</p></div>
+  </section>
+
+  <!-- ======================= DADES ======================= -->
+  <section class="tab" id="tab-dades">
+    <div class="grid g2">
+      <div class="card prose">
+        <h3 style="margin-top:0">Fonts i metodologia</h3>
+        <ul>
+          <li><b>Atur registrat:</b> Observatori del Treball i Model Productiu (Generalitat de Catalunya), descarregat amb el paquet <i>laboR</i>. Dades mensuals des del gener de 2011.</li>
+          <li><b>Afiliats a la Seguretat Social segons residència:</b> Idescat. Disponible des del març de 2012: trimestrals fins a l'abril de 2020 i mensuals des del maig de 2020. Entre trimestres s'utilitza l'últim valor conegut.</li>
+          <li><b>Taxa d'atur registral</b> = atur registrat / (atur registrat + afiliats residents). Utilitza tots els afiliats residents, no només els de 16 a 64 anys, de manera que pot diferir lleugerament de la taxa oficial. No es pot calcular abans del març de 2012.</li>
+          <li><b>Secret estadístic:</b> en municipis de menys de 20.000 habitants els valors d'1 a 3 s'oculten als desglossaments. Aquí s'han substituït per un valor aleatori (reproduïble) que fa que la suma coincideixi amb el total del municipi.</li>
+          <li><b>Mapa:</b> límits municipals de l'Institut Cartogràfic i Geològic de Catalunya (CC BY 4.0).</li>
+          <li><b>Variació interanual</b> = respecte al mateix mes de l'any anterior; <b>mensual</b> = respecte al mes anterior.</li>
+        </ul>
+        <p class="note" id="metaInfo"></p>
+      </div>
+      <div class="card">
+        <div class="row"><div><h3 style="margin:0">Sèrie del territori seleccionat</h3><div class="sub" style="margin:0" id="serieSub"></div></div>
+          <button class="icon-btn" id="btnCsv" style="margin-left:auto">⬇ Descarrega CSV</button></div>
+        <div class="tbl-wrap"><table id="tblSerie"></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Quadre de comandament generat a partir dels fitxers CSV del projecte. Les dades s'actualitzen soles quan hi ha mesos nous.</footer>
+<div id="tip"></div>
+<div class="toast" id="toast"></div>
+<script src="js/app.js"></script>
+</body>
+</html>
